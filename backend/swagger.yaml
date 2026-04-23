@@ -1,0 +1,368 @@
+openapi: 3.0.0
+info:
+  title: E-Commerce API
+  description: Comprehensive API for managing products and user authentication in e-commerce platform
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@ecommerce.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://api.ecommerce.com
+    description: Production server
+
+tags:
+  - name: User
+    description: User authentication and registration endpoints
+  - name: Product
+    description: Product management endpoints
+
+paths:
+  /api/user/register:
+    post:
+      tags:
+        - User
+      summary: Register a new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        "200":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  userId:
+                    type: string
+        "400":
+          description: Invalid input or user already exists
+        "500":
+          description: Server error
+
+  /api/user/login:
+    post:
+      tags:
+        - User
+      summary: User login
+      description: Authenticate user and get access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  userId:
+                    type: string
+        "401":
+          description: Invalid credentials
+        "500":
+          description: Server error
+
+  /api/user/admin/login:
+    post:
+      tags:
+        - User
+      summary: Admin login
+      description: Authenticate admin and get admin access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  example: adminpass
+      responses:
+        "200":
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+        "401":
+          description: Invalid admin credentials
+        "500":
+          description: Server error
+
+  /api/product/add:
+    post:
+      tags:
+        - Product
+      summary: Add a new product
+      description: Create a new product with images and details
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - price
+                - category
+                - image1
+                - image2
+                - image3
+                - image4
+              properties:
+                name:
+                  type: string
+                  example: Premium T-Shirt
+                description:
+                  type: string
+                  example: High quality cotton t-shirt
+                price:
+                  type: number
+                  format: float
+                  example: 29.99
+                category:
+                  type: string
+                  example: Clothing
+                subCategory:
+                  type: string
+                  example: Shirts
+                sizes:
+                  type: string
+                  example: S,M,L,XL
+                bestseller:
+                  type: boolean
+                  example: false
+                image1:
+                  type: string
+                  format: binary
+                  description: First product image
+                image2:
+                  type: string
+                  format: binary
+                  description: Second product image
+                image3:
+                  type: string
+                  format: binary
+                  description: Third product image
+                image4:
+                  type: string
+                  format: binary
+                  description: Fourth product image
+      responses:
+        "200":
+          description: Product added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  productId:
+                    type: string
+        "400":
+          description: Invalid input or missing required fields
+        "500":
+          description: Server error
+
+  /api/product/list:
+    post:
+      tags:
+        - Product
+      summary: Get all products
+      description: Retrieve list of all products with optional filters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  description: Optional category filter
+                limit:
+                  type: integer
+                  description: Number of products to return
+                skip:
+                  type: integer
+                  description: Number of products to skip
+      responses:
+        "200":
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+        "500":
+          description: Server error
+
+  /api/product/single:
+    post:
+      tags:
+        - Product
+      summary: Get single product
+      description: Retrieve details of a specific product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+              properties:
+                productId:
+                  type: string
+                  example: 507f1f77bcf86cd799439011
+      responses:
+        "200":
+          description: Product details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  product:
+                    $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+        "500":
+          description: Server error
+
+  /api/product/remove:
+    post:
+      tags:
+        - Product
+      summary: Remove a product
+      description: Delete a product by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+              properties:
+                productId:
+                  type: string
+                  example: 507f1f77bcf86cd799439011
+      responses:
+        "200":
+          description: Product removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "404":
+          description: Product not found
+        "500":
+          description: Server error
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        subCategory:
+          type: string
+        sizes:
+          type: array
+          items:
+            type: string
+        bestseller:
+          type: boolean
+        images:
+          type: array
+          items:
+            type: string
