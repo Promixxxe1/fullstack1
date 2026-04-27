@@ -49,28 +49,81 @@ app.get("/", (req, res) => {
   res.send(" API WORKING!");
 });
 
-// Only start server in development (not on Vercel)
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", message: "Server is running" });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error"
+  });
+});
+
+// Initialize connections
+let dbConnected = false;
+let dbConnecting = false;
+let dbConnectPromise = null;
+
+async function initializeConnections() {
+  if (dbConnected) return;
+  if (dbConnecting) return dbConnectPromise;
+
+  dbConnecting = true;
+  dbConnectPromise = (async () => {
+    try {
+      console.log("Attempting to connect to database...");
+      await connectDB();
+      console.log("Database connected successfully");
+      
+      console.log("Attempting to connect to Cloudinary...");
+      await connectCloudinary();
+      console.log("Cloudinary initialized successfully");
+      
+      dbConnected = true;
+      return true;
+    } catch (error) {
+      console.error("Connection error:", error);
+      dbConnecting = false;
+      throw error;
+    }
+  })();
+
+  return dbConnectPromise;
+}
+
+// Middleware to ensure connections are initialized before handling requests
+app.use(async (req, res, next) => {
+  try {
+    if (!dbConnected && !dbConnecting) {
+      await initializeConnections();
+    } else if (dbConnecting && !dbConnected) {
+      await dbConnectPromise;
+    }
+    next();
+  } catch (error) {
+    console.error("Connection middleware error:", error);
+    res.status(503).json({
+      success: false,
+      message: "Service temporarily unavailable - database connection failed"
+    });
+  }
+});
+
+// Development server
 if (process.env.NODE_ENV !== "production") {
   (async () => {
     try {
-      await connectDB();
-      await connectCloudinary();
-      app.listen(port, () => console.log(`server started on PORT: ${port}`));
+      await initializeConnections();
+      app.listen(port, () => {
+        console.log(`Development server started on PORT: ${port}`);
+      });
     } catch (error) {
-      console.error("Failed to start server:", error);
+      console.error("Failed to start development server:", error);
       process.exit(1);
-    }
-  })();
-} else {
-  // For Vercel production, ensure connections are attempted at startup
-  (async () => {
-    try {
-      await connectDB();
-      await connectCloudinary();
-      console.log("Production environment initialized successfully");
-    } catch (error) {
-      console.error("Failed to initialize production environment:", error);
-      // Continue anyway - some requests might still work
     }
   })();
 }
