@@ -44,14 +44,30 @@ app.get("/", (req, res) => {
   res.send(" API WORKING!");
 });
 
-// Start server after database connection
-(async () => {
-  try {
-    await connectDB();
-    await connectCloudinary();
-    app.listen(port, () => console.log(`server started on PORT: ${port}`));
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-})();
+// For local development
+const port = process.env.PORT || 5000;
+
+// Only start server in development (not on Vercel)
+if (process.env.NODE_ENV !== "production") {
+  (async () => {
+    try {
+      await connectDB();
+      await connectCloudinary();
+      app.listen(port, () => console.log(`server started on PORT: ${port}`));
+    } catch (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+    }
+  })();
+} else {
+  // For Vercel production, initialize connections but don't listen
+  connectDB().catch((error) => {
+    console.error("Database connection failed:", error);
+  });
+  connectCloudinary().catch((error) => {
+    console.error("Cloudinary connection failed:", error);
+  });
+}
+
+// Export app for Vercel serverless
+export default app;
