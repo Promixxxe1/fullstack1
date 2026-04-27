@@ -31,8 +31,13 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 //swagger setup
-const swaggerDocument = YAML.load("./swagger.yaml");
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+let swaggerDocument;
+try {
+  swaggerDocument = YAML.load("./swagger.yaml");
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+} catch (error) {
+  console.warn("Swagger docs not available:", error.message);
+}
 
 //api endpoints
 app.use("/api/user", userRouter);
@@ -57,13 +62,17 @@ if (process.env.NODE_ENV !== "production") {
     }
   })();
 } else {
-  // For Vercel production, initialize connections but don't listen
-  connectDB().catch((error) => {
-    console.error("Database connection failed:", error);
-  });
-  connectCloudinary().catch((error) => {
-    console.error("Cloudinary connection failed:", error);
-  });
+  // For Vercel production, ensure connections are attempted at startup
+  (async () => {
+    try {
+      await connectDB();
+      await connectCloudinary();
+      console.log("Production environment initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize production environment:", error);
+      // Continue anyway - some requests might still work
+    }
+  })();
 }
 
 // Export app for Vercel serverless
