@@ -44,9 +44,6 @@ app.get("/", (req, res) => {
   res.send(" API WORKING!");
 });
 
-// For local development
-const port = process.env.PORT || 5000;
-
 // Only start server in development (not on Vercel)
 if (process.env.NODE_ENV !== "production") {
   (async () => {
