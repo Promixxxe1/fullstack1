@@ -38,6 +38,50 @@ const PlaceOrder = () => {
     setFormData((data) => ({ ...data, [name]: value }));
   };
 
+  const initPay = (orderId, amount, currency) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: amount,
+      currency: currency,
+      name: "order payment",
+      description: "Test Transaction",
+      order_id: orderId,
+      handler: async function (response) {
+        try {
+          const verifyResponse = await axios.post(
+            backendUrl + "/api/order/verifyRazorpay",
+            {
+              orderId: orderId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            },
+            { headers: { token } },
+          );
+
+          if (verifyResponse.data.success) {
+            toast.success("Payment verified successfully!");
+            navigate("/order");
+          } else {
+            toast.error(verifyResponse.data.message);
+          }
+        } catch (error) {
+          console.error("Verification error:", error);
+          toast.error(
+            error.response?.data?.message || "Payment verification failed",
+          );
+        }
+      },
+      prefill: {
+        name: formData.firstName + " " + formData.lastName,
+        email: formData.email,
+        contact: formData.phone,
+      },
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   const onSubmitHandler = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -86,7 +130,7 @@ const PlaceOrder = () => {
 
       switch (method) {
         //API CALL FOR COD METHOD
-        case "cod":
+        case "cod": {
           const response = await axios.post(
             backendUrl + "/api/order/place",
             orderData,
@@ -101,6 +145,36 @@ const PlaceOrder = () => {
             toast.error(response.data.message || "Failed to place order");
           }
           break;
+        }
+
+        case "stripe": {
+          const stripeResponse = await axios.post(
+            backendUrl + "/api/order/stripe",
+            orderData,
+            { headers: { token } },
+          );
+
+          if (stripeResponse.data.success) {
+            const { session_url } = stripeResponse.data;
+            window.location.replace(session_url);
+          } else {
+            toast.error(stripeResponse.data.message);
+          }
+
+          break;
+        }
+        case "razorpay": {
+          const razorpayResponse = await axios.post(
+            backendUrl + "/api/order/razorpay",
+            orderData,
+            { headers: { token } },
+          );
+          if (razorpayResponse.data.success) {
+            const { order } = razorpayResponse.data;
+            initPay(order.id, order.amount, order.currency);
+          }
+          break;
+        }
 
         default:
           toast.error("Please select a payment method");

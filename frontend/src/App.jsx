@@ -11,16 +11,15 @@ import Order from "./pages/Order";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SearchBar from "./components/searchBar";
-import { ToastContainer, toast} from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Verify from "./pages/verify";
 const App = () => {
   return (
     <div>
-      <ToastContainer  />
+      <ToastContainer />
       <Navbar />
       <SearchBar />
-     
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -32,10 +31,11 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/order" element={<Order />} />
+        <Route path="/verify" element={<Verify />} />
       </Routes>
       <Footer />
     </div>
   );
-}
+};
 
-export default App
+export default App;
