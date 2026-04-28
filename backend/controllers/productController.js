@@ -29,7 +29,7 @@ const addProduct = async (req, res) => {
           `data:${image.mimetype};base64,${image.buffer.toString("base64")}`,
           {
             resource_type: "image",
-          }
+          },
         );
 
         return result.secure_url;
@@ -93,10 +93,10 @@ const removeProduct = async (req, res) => {
 
 //function for single products
 const singleProduct = async (req, res) => {
-  try { 
-    const { productId } = req.body
-    const product = await productModel.findById(productId)
-    res.json({ success: true, product })
+  try {
+    const { productId } = req.body;
+    const product = await productModel.findById(productId);
+    res.json({ success: true, product });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });

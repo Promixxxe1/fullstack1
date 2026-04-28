@@ -3,11 +3,11 @@ import multer from "multer";
 // Use memory storage instead of disk storage (required for Vercel serverless)
 const storage = multer.memoryStorage();
 
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
 });
 
 export default upload;
