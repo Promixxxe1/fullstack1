@@ -10,7 +10,7 @@ import YAML from "yamljs";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 
-//app configuration
+// app configuration
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -18,21 +18,55 @@ const port = process.env.PORT || 5000;
 const corsOptions = {
   origin: [
     process.env.FRONTEND_URL || "http://localhost:5173",
-    "https://forever-admin-lac-two.vercel.app", // Add your production admin URL
+    "https://forever-frontend-psi-one.vercel.app", // Added this based on your network request
+    "https://forever-admin-lac-two.vercel.app",
     "http://localhost:5174",
     "http://localhost:5175",
   ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Added OPTIONS explicitly
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "token", "Authorization"],
 };
 
-app.use(cors(corsOptions));
-
-
-//middlewares
+// Middlewares
+app.use(cors(corsOptions)); // Apply CORS first
 app.use(express.json());
-app.use(cors(corsOptions));
+
+// Note: You had app.use(cors(corsOptions)) twice in your snippet. 
+// You only need it once, before your route definitions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //swagger setup
 let swaggerDocument;
