@@ -1,5 +1,4 @@
 import express from "express";
-import "./scheduler.js";
 import cors from "cors";
 import "dotenv/config";
 import connectDB from "./config/mongodb.js";
@@ -13,14 +12,13 @@ import orderRouter from "./routes/orderRoute.js";
 
 // app configuration
 const app = express();
-
 const port = process.env.PORT || 5000;
 
 // CORS configuration
 const corsOptions = {
   origin: [
     process.env.FRONTEND_URL || "http://localhost:5173",
-    "https://forever-frontend-qklwi70o1-promixxxe1s-projects.vercel.app",
+    "https://forever-frontend-qklwi70o1-promixxxe1s-projects.vercel.app", // Matches the actual request
     "https://forever-frontend-psi-one.vercel.app",
     "https://forever-admin-lac-two.vercel.app",
     "http://localhost:5174",
@@ -32,10 +30,13 @@ const corsOptions = {
 };
 
 // Middlewares
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); // Apply CORS first
 app.use(express.json());
 
-// swagger setup
+// Note: You had app.use(cors(corsOptions)) twice in your snippet.
+// You only need it once, before your route definitions.
+
+//swagger setup
 let swaggerDocument;
 try {
   swaggerDocument = YAML.load("./swagger.yaml");
@@ -44,7 +45,7 @@ try {
   console.warn("Swagger docs not available:", error.message);
 }
 
-// api endpoints
+//api endpoints
 app.use("/api/user", userRouter);
 app.use("/api/product", productRouter);
 app.use("/api/cart", cartRouter);
@@ -76,15 +77,18 @@ let dbConnectPromise = null;
 async function initializeConnections() {
   if (dbConnected) return;
   if (dbConnecting) return dbConnectPromise;
+
   dbConnecting = true;
   dbConnectPromise = (async () => {
     try {
       console.log("Attempting to connect to database...");
       await connectDB();
       console.log("Database connected successfully");
+
       console.log("Attempting to connect to Cloudinary...");
       await connectCloudinary();
       console.log("Cloudinary initialized successfully");
+
       dbConnected = true;
       return true;
     } catch (error) {
@@ -93,10 +97,11 @@ async function initializeConnections() {
       throw error;
     }
   })();
+
   return dbConnectPromise;
 }
 
-// Middleware to ensure connections
+// Middleware to ensure connections are initialized before handling requests
 app.use(async (req, res, next) => {
   try {
     if (!dbConnected && !dbConnecting) {
@@ -114,17 +119,20 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Start Server (This fixes the Render "Exited Early" issue)
-(async () => {
-  try {
-    await initializeConnections();
-    app.listen(port, "0.0.0.0", () => {
-      console.log(`Server started on PORT: ${port}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-})();
+// Development server
+if (process.env.NODE_ENV !== "production") {
+  (async () => {
+    try {
+      await initializeConnections();
+      app.listen(port, () => {
+        console.log(`Development server started on PORT: ${port}`);
+      });
+    } catch (error) {
+      console.error("Failed to start development server:", error);
+      process.exit(1);
+    }
+  })();
+}
 
+// Export app for Vercel serverless
 export default app;
